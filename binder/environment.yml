@@ -28,6 +28,7 @@ dependencies:
   - ipyleaflet
   - ipympl
   - joblib
+  - jupyterlab_launcher
   - jupyter-vscode-proxy
   - lxml
   - mapclassify
