@@ -43,6 +43,8 @@ dependencies:
   - pexpect
   - pillow
   - pip
+  - pip:
+    - icepyx
   - psutil
   - pyepsg
   - pyproj
