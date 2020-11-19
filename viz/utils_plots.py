@@ -77,6 +77,26 @@ def plot_daily(data, day=None, col='ground_track'):
     return(p) 
 
 
+def plot_rgt(data, rgt=None, col='ground_track'):
+    """
+    Panel with rgt plots: lat vs lon (map view), and height vs lat (profile view)
+    Interactivity on rgt and color
+    
+    """
+    data['date']=data.time.dt.date.astype(str)
+    def rgt_scatter(data=data, rgt=rgt, col='ground_track'):
+        mapp = data[data.start_rgt==rgt].hvplot.scatter(x='longitude', y='latitude', s=0.2, c='h_li', alpha=0.2, cmap='viridis', hover=False)
+        scatter = data[data.start_rgt==rgt].hvplot.scatter(x='latitude', y='h_li', s=0.2, alpha=0.2, c=col, hover=False)
+        return(pn.Column(mapp, scatter))
+    
+    kw = dict(col=sorted(list(data.columns)), 
+              rgt=sorted(data.start_rgt.unique()))
+
+    i = pn.interact(rgt_scatter, **kw)
+    text = "<br>\n# Daily ATL06 data for the selected area\nSelect a day and a color variable"
+    p = pn.Row(pn.Column(text, i[0][1], i[0][0]), i[1][0])
+    return(p) 
+
 def plot_DEM_difference(data, histogram='ground_track', scatter='longitude', bins=100, subplots=False):
     """
     Panel to explore pointwise differences with ArcticDEM

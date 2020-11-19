@@ -14,8 +14,8 @@ WGETRC="$wgetrc"
 
 prompt_credentials() {
     echo "Enter your Earthdata Login or other provider supplied credentials"
-    read -p "Username (fsapienza): " username
-    username=${username:-fsapienza}
+    read -p "Username (alicecima): " username
+    username=${username:-alicecima}
     read -s -p "Password: " password
     echo "machine urs.earthdata.nasa.gov login $username password $password" >> $netrc
     echo

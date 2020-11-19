@@ -14,8 +14,8 @@ WGETRC="$wgetrc"
 
 prompt_credentials() {
     echo "Enter your Earthdata Login or other provider supplied credentials"
-    read -p "Username (fsapienza): " username
-    username=${username:-fsapienza}
+    read -p "Username (alicecima): " username
+    username=${username:-alicecima}
     read -s -p "Password: " password
     echo "machine urs.earthdata.nasa.gov login $username password $password" >> $netrc
     echo
@@ -95,7 +95,7 @@ fetch_urls() {
 }
 
 fetch_urls <<'EDSCEOF'
-https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5110/CLDMSK_L2_VIIRS_SNPP/2019/004/CLDMSK_L2_VIIRS_SNPP.A2019004.0348.001.2019062192950.nc
-https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5110/CLDMSK_L2_VIIRS_SNPP/2019/004/CLDMSK_L2_VIIRS_SNPP.A2019004.0342.001.2019062192932.nc
-https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5110/CLDMSK_L2_VIIRS_SNPP/2019/004/CLDMSK_L2_VIIRS_SNPP.A2019004.0336.001.2019062192940.nc
+https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5110/CLDMSK_L2_VIIRS_SNPP/2019/015/CLDMSK_L2_VIIRS_SNPP.A2019015.1518.001.2019062173102.nc
+https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5110/CLDMSK_L2_VIIRS_SNPP/2019/015/CLDMSK_L2_VIIRS_SNPP.A2019015.1512.001.2019062173108.nc
+https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5110/CLDMSK_L2_VIIRS_SNPP/2019/015/CLDMSK_L2_VIIRS_SNPP.A2019015.1336.001.2019062173021.nc
 EDSCEOF

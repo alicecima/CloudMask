@@ -3,6 +3,8 @@ import panel.widgets as pnw
 pn.extension('plotly')
 import plotly.express as px
 
+import warnings
+warnings.filterwarnings("ignore")
 
 def atl06_3D(data):
     """
