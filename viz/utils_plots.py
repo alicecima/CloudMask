@@ -61,20 +61,23 @@ def plot_daily(data, day=None, col='ground_track'):
         global lat_bounds
         lat_bounds = BoundsX(source=scatter) # select box to define area for external data
         return(pn.Column(mapp,scatter))
+
+    global day_glob
+
+    # Widgets
+    col  = pnw.Select(name='color', value='ground_track', options=sorted(list(data.columns)))
+    day_glob  = pnw.Select(name='day', options=sorted(list(data['time'].dt.date.unique())))
+    text = "<br>\n# Daily ATL06 data for the selected area\nSelect a day and a color variable"
     
-    # Widget values
-    kw = dict(col=sorted(list(data.columns)), 
-              day=data['time'].dt.date.unique())
-    
-    global im  # used to extract selected day and retrieve external data
-    
-    # Interactive plot
-    im = pn.interact(daily_scatter, **kw)
+    # Interactive plot 
+    @pn.depends(col, day_glob)
+    def reactive(col, day_glob):
+        return(daily_scatter(data, day_glob, col))
     
     # Layout
-    text = "<br>\n# Daily ATL06 data for the selected area\nSelect a day and a color variable"
-    p = pn.Row(pn.Column(text, im[0][1], im[0][0]), im[1][0])
-    return(p) 
+    widgets = pn.Column(text, day_glob, col)
+    image = pn.Row(widgets, reactive)
+    return(image)
 
 
 def plot_rgt(data, rgt=None, col='ground_track'):
@@ -107,24 +110,30 @@ def plot_DEM_difference(data, histogram='ground_track', scatter='longitude', bin
     def difference(data=data, histogram=histogram, scatter=scatter):
         plot_hist = data.hvplot.hist('height_diff', bins=bins, by=histogram, subplots=subplots, alpha=0.5)        
         plot_scat = data.hvplot.scatter(scatter, 'height_diff', size=1, alpha=0.1)
-        return(pn.Column(plot_scat,plot_hist))
+        return(pn.Column(plot_scat, plot_hist))
+
+    # Widgets
+    histogram  = pnw.Select(name='histogram', value='ground_track', options=['ground_track','atl06_quality_summary',
+                                                                             'bsnow_conf','bsnow_h', 'bsnow_od', 
+                                                                             'cloud_flg_asr', 'cloud_flg_atm', 
+                                                                             'msw_flag', 'layer_flag'])
+    scatter  = pnw.Select(name='scatter', value='longitude', options=['segment_id', 'latitude', 'longitude', 
+                                                                      'h_li','n_fit_photons', 'w_surface_window_final', 
+                                                                      'n_fit_photons_ratio_w','bckgrd', 
+                                                                      'dem_h', 'geoid_h'])
+    text = "<br>\n# Difference in estimated height with ArcticDEM"
+    df = pd.DataFrame(data.height_diff.describe())
+
     
-    # Widget values
-    kw = dict(histogram=['ground_track','atl06_quality_summary','bsnow_conf', 
-                    'bsnow_h', 'bsnow_od', 'cloud_flg_asr',
-                    'cloud_flg_atm', 'msw_flag', 'layer_flag'], 
-              scatter=['segment_id', 'latitude', 'longitude', 'h_li','n_fit_photons', 
-                    'w_surface_window_final', 'n_fit_photons_ratio_w',
-                    'bckgrd', 'dem_h', 'geoid_h'])
-    
-    # Interactive plot
-    i = pn.interact(difference, **kw)
+    # Interactive plot 
+    @pn.depends(histogram, scatter)
+    def reactive(histogram, scatter):
+        return(difference(data, histogram, scatter))
     
     # Layout
-    df = pd.DataFrame(data.height_diff.describe())
-    text = "<br>\n# Difference in estimated height with ArcticDEM"
-    p = pn.Row(pn.Column(text, i[0][1], i[0][0], df), pn.Column(i[1][0]))
-    return(p) 
+    widgets = pn.Column(text, scatter, histogram, df)
+    image = pn.Row(widgets, reactive)
+    return(image)
 
 
 def variability(data, window=30):
@@ -202,7 +211,7 @@ def era5_static(era5_data, hour, wind):
         angle = 'rad_100'
         mag = 'intensity_100'
     
-    return(era5_data.sel(Time=str(im[0][0].value)+'T{hour:02d}'.format(hour=hour)).hvplot.vectorfield(
+    return(era5_data.sel(Time=str(day_glob.value)+'T{hour:02d}'.format(hour=hour)).hvplot.vectorfield(
         x='lon', y='lat', angle=angle, mag=mag, hover=False)).opts(
         magnitude=dim(mag)*0.01, color=mag, colorbar=True, rescale_lengths=False, ylabel='latitude')
 
@@ -234,7 +243,7 @@ def plot_era5(data):
     
     """    
     # Subset input dataframe based on day and latitude bounds
-    data_select=data[(data.loc[:,'time'].dt.date==im[0][0].value) & 
+    data_select=data[(data.loc[:,'time'].dt.date==day_glob.value) & 
                      (data.loc[:,'latitude'].between(lat_bounds.boundsx[0], 
                                                      lat_bounds.boundsx[1]))]
     # Define spatial extent for ERA5
@@ -242,9 +251,9 @@ def plot_era5(data):
           round(data_select.longitude.max()+0.5), round(data_select.latitude.max()+0.5)]
     
     # Extract minimum hour from input dataframe
-    h = min(data[data.time.dt.date==im[0][0].value].time.dt.hour)
+    h = min(data[data.time.dt.date==day_glob.value].time.dt.hour)
     
-    era5_data = era5(str(im[0][0].value), hour=h, spatial_extent=area)
+    era5_data = era5(str(day_glob.value), hour=h, spatial_extent=area)
     return(era5_dynamic(era5_data))
 
 
@@ -282,7 +291,7 @@ def is_file_in_directory(fname, path):
     return(False)
 
 
-def atl03(area, date_range, path, user, email):
+def atl03(area, date_range, path):
     
     """
     Retrieve atl_03 granules corresponding to selected spatio-temporal area
@@ -297,7 +306,8 @@ def atl03(area, date_range, path, user, email):
         print("You have already downloaded all the requested files")
         
     else:
-
+        user = input("Earthdata Login ID: ")
+        email = input("Earthdata Login email: ")
         region_a.earthdata_login(user, email)
         #region_a.order_vars.append(var_list=['lat_ph', "lon_ph", "h_ph"])
         #region_a.subsetparams(Coverage=region_a.order_vars.wanted)
@@ -346,12 +356,10 @@ def atl03(area, date_range, path, user, email):
 
 
 def atl03_data(data,
-          path = "data/new_ATL03", 
-          user = 'alicecima', 
-          email = 'alice_cima@berkeley.edu'):
+          path = "data/new_ATL03"):
     
     # Subset input dataframe based on day and latitude bounds
-    data_select=data[(data.loc[:,'time'].dt.date==im[0][0].value) & 
+    data_select=data[(data.loc[:,'time'].dt.date==day_glob.value) & 
                      (data.loc[:,'latitude'].between(lat_bounds.boundsx[0], 
                                                      lat_bounds.boundsx[1]))]
     
@@ -359,7 +367,7 @@ def atl03_data(data,
     area=[round(data_select.longitude.min()-0.5), round(data_select.latitude.min()-0.5), 
           round(data_select.longitude.max()+0.5), round(data_select.latitude.max()+0.5)]
     
-    return(atl03(area, [str(im[0][0].value), str(im[0][0].value)], path, user, email))
+    return(atl03(area, [str(day_glob.value), str(day_glob.value)], path))
 
 
 
@@ -388,7 +396,7 @@ def VIIRS_select(data,
     counter_viirs = 0
     
     # Extract time from ATL06 selected day
-    time = list(data[(data.time.dt.date==im[0][0].value)].time)[0]
+    time = list(data[(data.time.dt.date==day_glob.value)].time)[0]
 
     # Define time range for VIIRS
     start = time - pd.DateOffset(hours=hr)
@@ -428,7 +436,7 @@ def VIIRS_get(data, path="data/VIIRS_bash"):
     
     """
     # Subset input dataframe based on day and latitude bounds
-    data_select=data[(data.loc[:,'time'].dt.date==im[0][0].value) & 
+    data_select=data[(data.loc[:,'time'].dt.date==day_glob.value) & 
                      (data.loc[:,'latitude'].between(lat_bounds.boundsx[0], 
                                                      lat_bounds.boundsx[1]))]
     # Define spatial extent for VIIRS
@@ -439,7 +447,7 @@ def VIIRS_get(data, path="data/VIIRS_bash"):
     count = 0
     path = Path(path)
     
-    print('ATL06 data collected at ' + str(list(data[(data.time.dt.date==im[0][0].value)].time)[0]))
+    print('ATL06 data collected at ' + str(list(data[(data.time.dt.date==day_glob.value)].time)[0]))
     
     # Create list of xarray datasets, one for each VIIRS image that matches the ATL06 area
     for i in path.glob('*.nc'):

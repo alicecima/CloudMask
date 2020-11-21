@@ -53,9 +53,7 @@ def area():
                              Label("Bottom-left corner"), lon_l, lat_l, Label("Upper-right corner"), lon_r, lat_r])))
 
 
-def atl06_data(path="./data/new_ATL06", 
-               user='alicecima', 
-               email='alice_cima@berkeley.edu'):
+def atl06_data(path="./data/new_ATL06"):
     """
     Return a Pandas dataframe with ATL06 data for selected area 
     """
@@ -80,9 +78,7 @@ def atl06_data(path="./data/new_ATL06",
                 date_range=[str(start.value), str(end.value)], 
                 time_start = "00:00:00",
                 time_end = "23:59:59",
-                path = path, 
-                user = user, 
-                email = email)
+                path = path)
     return(df)
     
     
@@ -308,9 +304,7 @@ def read_atl06 (spatial_extent,
                 date_range, 
                 time_start = "00:00:00",
                 time_end = "23:59:59",
-                path = "./data/new_ATL06", 
-                user = 'alicecima', 
-                email = 'alice_cima@berkeley.edu'):
+                path = "./data/new_ATL06"):
     
     region_a = ipx.Query("ATL06", spatial_extent, date_range, start_time = time_start, end_time = time_end)
     #region_a = ipd.Icesat2Data("ATL06", spatial_extent, date_range, start_time = time_start, end_time = time_end)
@@ -338,7 +332,8 @@ def read_atl06 (spatial_extent,
         print("You have already downloaded all the requested files")
         
     else:
-
+        user = input("Earthdata Login ID: ")
+        email = input("Earthdata Login email: ")
         region_a.earthdata_login(user, email)
 
         # This lines were commented after the last update of icepyx. See Issue https://github.com/icesat2py/icepyx/issues/145
